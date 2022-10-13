@@ -2,21 +2,20 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class AddEventDialog(QtWidgets.QDialog):
-    def __init__(self):
+    def __init__(self, handler):
         super().__init__()
+        self.handler = handler
         self.setup()
 
+    def accept(self) -> None:
+        self.handler(self.formLayout)
+        super().accept()
+
     def setup(self):
-        self.setObjectName("Dialog")
-        self.resize(531, 382)
-        self.buttonBox = QtWidgets.QDialogButtonBox(self)
-        self.buttonBox.setGeometry(QtCore.QRect(30, 320, 471, 32))
-        self.buttonBox.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Ok)
-        self.buttonBox.setObjectName("buttonBox")
+        self.setObjectName("AddEventDialog")
+        self.resize(700, 400)
         self.formLayoutWidget = QtWidgets.QWidget(self)
-        self.formLayoutWidget.setGeometry(QtCore.QRect(30, 30, 471, 271))
+        self.formLayoutWidget.setGeometry(QtCore.QRect(100, 100, 600, 300))
         self.formLayoutWidget.setObjectName("formLayoutWidget")
         self.formLayout = QtWidgets.QFormLayout(self.formLayoutWidget)
         self.formLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinimumSize)
@@ -71,6 +70,14 @@ class AddEventDialog(QtWidgets.QDialog):
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.FieldRole, self.DateTimeEdit_2)
 
         self.retranslate()
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(self)
+        self.buttonBox.setGeometry(QtCore.QRect(0, 330, 600, 50))
+        self.buttonBox.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Ok
+        )
+        self.buttonBox.setObjectName("buttonBox")
         self.buttonBox.accepted.connect(self.accept)  # type: ignore
         self.buttonBox.rejected.connect(self.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(self)

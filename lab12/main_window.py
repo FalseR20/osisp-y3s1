@@ -1,6 +1,9 @@
-from PyQt6 import QtCore, QtGui, QtWidgets
+import logging
 
-from lab12.add_event_dialog import AddEventDialog
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtWidgets import QInputDialog
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -36,9 +39,8 @@ class MainWindow(QtWidgets.QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("mainWindow", "Календарь"))
         self.pushButton.setText(_translate("mainWindow", "Добавить событие"))
-        self.pushButton.clicked.connect(self.add)  # type: ignore
+        self.pushButton.clicked.connect(self.add_event)  # type: ignore
 
-    @staticmethod
-    def add(_):
-        dialog = AddEventDialog()
-        dialog.exec()
+    def add_event(self, _):
+        text, ok = QInputDialog.getText(self, "Event", "Enter name of event")
+        logging.debug("%s", text)
