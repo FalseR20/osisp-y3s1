@@ -4,7 +4,6 @@ import sys
 from PyQt6 import QtWidgets
 
 from main_window import MainWindow
-from constants import STYLES_PATH
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -17,5 +16,4 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     app.setStyle("Linux")
-    app.setStyleSheet(open(STYLES_PATH).read())
     app.exec()
