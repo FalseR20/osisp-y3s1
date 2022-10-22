@@ -14,13 +14,6 @@ class EventUnit:
     description: str
     time: QtCore.QTime
 
-    # def __eq__(self, other) -> bool:
-    #     if isinstance(other, EventUnit):
-    #         return self.description == other.description
-    #     if isinstance(other, str):
-    #         return self.description == other
-    #     return False
-
 
 Data = dict[QtCore.QDate, list[EventUnit]]
 

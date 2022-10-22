@@ -1,6 +1,5 @@
-from PyQt6 import QtCore, QtGui, QtWidgets
-
 from data_module import EventUnit
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class AddEventDialog(QtWidgets.QDialog):
@@ -81,8 +80,15 @@ class AddEventDialog(QtWidgets.QDialog):
         self.buttonBox.rejected.connect(self.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def exec_(self, event_unit: EventUnit) -> tuple[str, QtCore.QTime, bool]:
+    def exec_new(self) -> tuple[EventUnit, bool]:
+        status = self.exec()
+        return EventUnit(self.LineEdit.text(), self.DateTimeEdit.time()), bool(status)
+
+    def exec_change(self, event_unit: EventUnit) -> bool:
         self.LineEdit.setText(event_unit.description)
         self.DateTimeEdit.setTime(event_unit.time)
         status = self.exec()
-        return self.LineEdit.text(), self.DateTimeEdit.time(), bool(status)
+        if is_ok := bool(status):
+            event_unit.description = self.LineEdit.text()
+            event_unit.time = self.DateTimeEdit.time()
+        return is_ok

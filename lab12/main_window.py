@@ -1,9 +1,10 @@
 from functools import partial
 
-from data_module import save_data, load_data, Data, EventUnit
-from lab12.add_event_dialog import AddEventDialog
+from data_module import Data, EventUnit, load_data, save_data
 from logging_ import get_logger
 from PyQt6 import QtCore, QtGui, QtWidgets
+
+from lab12.add_event_dialog import AddEventDialog
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -63,13 +64,13 @@ class MainWindow(QtWidgets.QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def add_new_event(self):
-        text, time, is_ok = AddEventDialog().exec_()
-        self.logger.debug("Dialog exec: text = '%s', time = %s, is_ok = %s", text, time, is_ok)
+        event_unit, is_ok = AddEventDialog().exec_new()
+        self.logger.debug("Dialog exec: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
             return
         if not self.events_dict.get(self.current_selected_date):
             self.events_dict[self.current_selected_date] = []
-        self.events_dict[self.current_selected_date].append(EventUnit(text, time))
+        self.events_dict[self.current_selected_date].append(event_unit)
         self.save_data()
         self.update_layout()
 
@@ -88,18 +89,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def create_event_widget(self, event_unit: EventUnit):
         button = QtWidgets.QPushButton()
-        button.setFixedSize(QtCore.QSize(620, 50))
+        button.setFixedSize(QtCore.QSize(620, 48))
         button.clicked.connect(partial(self.change_event, event_unit))  # type: ignore
-        button.setText(event_unit.description)
-        button.setFont(self.newEventButtonFont)
+        time_label = QtWidgets.QLabel(button)
+        time_label.setGeometry(QtCore.QRect(10, 10, 600, 26))
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        font.setWeight(50)
+        time_label.setFont(font)
+        time_label.setText(f"{event_unit.time.toString('hh:mm') :10}{event_unit.description}")
         return button
 
     def change_event(self, event_unit: EventUnit):
-        text, time, is_ok = AddEventDialog().exec_(event_unit)
-        self.logger.debug("Dialog exec (change %s): text = '%s', time = %s, is_ok = %s", event_unit, text, time, is_ok)
-        if not is_ok:
-            return
-        event_unit.description = text
-        event_unit.time = time
-        self.save_data()
-        self.update_layout()
+        self.logger.debug("Dialog exec before: event_unit = %s", event_unit)
+        is_ok = AddEventDialog().exec_change(event_unit)
+        self.logger.debug("Dialog exec after: event_unit = %s, is_ok = %s", event_unit, is_ok)
+        if is_ok:
+            self.save_data()
+            self.update_layout()
