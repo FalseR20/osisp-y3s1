@@ -1,15 +1,15 @@
-from PyQt6 import QtCore, QtGui, QtWidgets
+from functools import partial
 
+import data_saver
 from logging_ import get_logger
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    events_dict: dict[QtCore.QDate, list[QtWidgets.QLabel]] = {}
-
     def __init__(self):
         super().__init__()
 
-        # Main window and central widget
+        # Main window
         self.logger = get_logger(self.__class__.__module__)
         self.setObjectName("mainWindow")
         self.setFixedSize(700, 880)
@@ -17,6 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.centralwidget.setObjectName("centralwidget")
         self.setCentralWidget(self.centralwidget)
 
+        # Central widget
         self.calendarWidget = QtWidgets.QCalendarWidget(self.centralwidget)
         self.calendarWidget.setGeometry(QtCore.QRect(0, 0, 700, 400))
         self.calendarWidget.setObjectName("calendarWidget")
@@ -24,64 +25,82 @@ class MainWindow(QtWidgets.QMainWindow):
         self.calendarWidget.setGridVisible(True)
         self.current_selected_date: QtCore.QDate = self.calendarWidget.selectedDate()
 
-        # Scroll area
-        self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
-        self.scrollArea.setObjectName("scrollArea")
-        self.scrollArea.setGeometry(QtCore.QRect(50, 430, 600, 400))
-        self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-
-        # Layout
-        self.eventsLayout = QtWidgets.QVBoxLayout(self.scrollArea)
-        self.eventsLayout.setObjectName("eventsLayout")
-        self.elementsSize = QtCore.QSize(self.scrollArea.geometry().width() - 40, 50)
-
         # Button for adding new event
-        self.newEventButton = QtWidgets.QPushButton()
+        self.newEventButton = QtWidgets.QPushButton(self.centralwidget)
         self.newEventButton.setObjectName("newEventButton")
-        self.newEventButton.setFixedSize(self.elementsSize)
+        self.newEventButton.setGeometry(QtCore.QRect(20, 420, 660, 60))
         self.newEventButtonFont = QtGui.QFont()
         self.newEventButtonFont.setPointSize(20)
         self.newEventButtonFont.setWeight(50)
         self.newEventButton.setFont(self.newEventButtonFont)
-        self.newEventButton.setObjectName("pushButton")
+        self.newEventButton.clicked.connect(self.add_new_event)  # type: ignore
 
-        # self.select_new_date_event()
+        # Scroll area
+        self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollArea.setGeometry(QtCore.QRect(20, 500, 660, 360))
+        # self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.scrollAreaWidget = QtWidgets.QWidget()
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setWidget(self.scrollAreaWidget)
+
+        # Layout
+        self.eventsLayout = QtWidgets.QVBoxLayout()
+        self.eventsLayout.setObjectName("eventsLayout")
+
+        self.scrollAreaWidget.setLayout(self.eventsLayout)
+
+        self.events_dict: dict[QtCore.QDate, list[str]] = data_saver.load_data()
+        self.select_new_date()
         self.retranslate()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def select_new_date_event(self, date: QtCore.QDate):
-        self.logger.debug("Selected date: %s", date)
-        # prev_list = self.events_dict.get(self.current_selected_date)
-        # if prev_list:
-        #     for event_label in prev_list:
-        #         event_label.hide()
-        # self.current_selected_date = date
-        # self.eventsLayout.  # Clear
-        # if events := self.events_dict.get(date):
-        #      pass
-
-        # curr_list = self.events_dict.get(self.current_selected_date)
-        # if curr_list:
-        #     for event_label in curr_list:
-        #         event_label.show()
-        # self.newEventButton.clicked.connect(self.add_event)  # type: ignore
-        # self.eventsLayout.addWidget(self.newEventButton)
-
-    def add_event(self):
+    def add_new_event(self):
         text, is_ok = QtWidgets.QInputDialog.getText(self, "Event", "Enter name of event")
         self.logger.debug("Input dialog: text = '%s', is_ok = %s", text, is_ok)
-        # label = QtWidgets.QLabel()
-        # label.setText(text)
-        # label.hide()
-        # date = self.calendarWidget.selectedDate()
-        # prev_list = self.events_dict.get(date)
-        # if prev_list is None:
-        #     self.events_dict[date] = [label]
-        #     return
-        # prev_list.append(label)
+        if not is_ok:
+            return
+        if not self.events_dict.get(self.current_selected_date):
+            self.events_dict[self.current_selected_date] = [text]
+        else:
+            self.events_dict[self.current_selected_date].append(text)
+        data_saver.save_data(self.events_dict)
+        self.select_new_date()
+
+    def select_new_date_event(self, date: QtCore.QDate):
+        self.current_selected_date = date
+        self.select_new_date()
+
+    def select_new_date(self):
+        self.logger.debug("Selected date: %s", self.current_selected_date)
+        for i in reversed(range(self.eventsLayout.count())):  # Clear layout
+            self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
+
+        if events_list := self.events_dict.get(self.current_selected_date):
+            for event_desc in events_list:
+                self.eventsLayout.addWidget(self.create_event_widget(event_desc))
+        self.eventsLayout.addStretch()
+
+    def create_event_widget(self, event_desc: str):
+        button = QtWidgets.QPushButton()
+        button.setFixedSize(QtCore.QSize(620, 50))
+        button.clicked.connect(partial(self.change_event, event_desc))  # type: ignore
+        button.setText(event_desc)
+        button.setFont(self.newEventButtonFont)
+        return button
+
+    def change_event(self, event: str):
+        text, is_ok = QtWidgets.QInputDialog.getText(self, "Event", "Enter new name of event")
+        self.logger.debug("Input dialog (change %s): text = '%s', is_ok = %s", event, text, is_ok)
+        if not is_ok:
+            return
+        events_list = self.events_dict[self.current_selected_date]
+        event_i = events_list.index(event)
+        events_list[event_i] = text
+        data_saver.save_data(self.events_dict)
+        self.select_new_date()
 
     def retranslate(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("mainWindow", "Календарь"))
         self.newEventButton.setText(_translate("mainWindow", "Добавить событие"))
-
