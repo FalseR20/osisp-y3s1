@@ -1,6 +1,7 @@
 from functools import partial
 
-import data_saver
+from data_module import save_data, load_data, Data, EventUnit
+from lab12.add_event_dialog import AddEventDialog
 from logging_ import get_logger
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -50,57 +51,55 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.scrollAreaWidget.setLayout(self.eventsLayout)
 
-        self.events_dict: dict[QtCore.QDate, list[str]] = data_saver.load_data()
-        self.select_new_date()
-        self.retranslate()
-        QtCore.QMetaObject.connectSlotsByName(self)
+        self.events_dict: Data = load_data()
+        self.save_data = partial(save_data, self.events_dict)
+        self.update_layout()
 
-    def add_new_event(self):
-        text, is_ok = QtWidgets.QInputDialog.getText(self, "Event", "Enter name of event")
-        self.logger.debug("Input dialog: text = '%s', is_ok = %s", text, is_ok)
-        if not is_ok:
-            return
-        if not self.events_dict.get(self.current_selected_date):
-            self.events_dict[self.current_selected_date] = [text]
-        else:
-            self.events_dict[self.current_selected_date].append(text)
-        data_saver.save_data(self.events_dict)
-        self.select_new_date()
-
-    def select_new_date_event(self, date: QtCore.QDate):
-        self.current_selected_date = date
-        self.select_new_date()
-
-    def select_new_date(self):
-        self.logger.debug("Selected date: %s", self.current_selected_date)
-        for i in reversed(range(self.eventsLayout.count())):  # Clear layout
-            self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
-
-        if events_list := self.events_dict.get(self.current_selected_date):
-            for event_desc in events_list:
-                self.eventsLayout.addWidget(self.create_event_widget(event_desc))
-        self.eventsLayout.addStretch()
-
-    def create_event_widget(self, event_desc: str):
-        button = QtWidgets.QPushButton()
-        button.setFixedSize(QtCore.QSize(620, 50))
-        button.clicked.connect(partial(self.change_event, event_desc))  # type: ignore
-        button.setText(event_desc)
-        button.setFont(self.newEventButtonFont)
-        return button
-
-    def change_event(self, event: str):
-        text, is_ok = QtWidgets.QInputDialog.getText(self, "Event", "Enter new name of event")
-        self.logger.debug("Input dialog (change %s): text = '%s', is_ok = %s", event, text, is_ok)
-        if not is_ok:
-            return
-        events_list = self.events_dict[self.current_selected_date]
-        event_i = events_list.index(event)
-        events_list[event_i] = text
-        data_saver.save_data(self.events_dict)
-        self.select_new_date()
-
-    def retranslate(self):
+        # Retranslate
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("mainWindow", "Календарь"))
         self.newEventButton.setText(_translate("mainWindow", "Добавить событие"))
+
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def add_new_event(self):
+        text, time, is_ok = AddEventDialog().exec_()
+        self.logger.debug("Dialog exec: text = '%s', time = %s, is_ok = %s", text, time, is_ok)
+        if not is_ok:
+            return
+        if not self.events_dict.get(self.current_selected_date):
+            self.events_dict[self.current_selected_date] = []
+        self.events_dict[self.current_selected_date].append(EventUnit(text, time))
+        self.save_data()
+        self.update_layout()
+
+    def select_new_date_event(self, date: QtCore.QDate):
+        self.current_selected_date = date
+        self.update_layout()
+
+    def update_layout(self):
+        self.logger.debug("Selected date: %s", self.current_selected_date)
+        for i in reversed(range(self.eventsLayout.count())):  # Clear layout
+            self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
+        if events_list := self.events_dict.get(self.current_selected_date):
+            for event_dict in events_list:
+                self.eventsLayout.addWidget(self.create_event_widget(event_dict))
+        self.eventsLayout.addStretch()
+
+    def create_event_widget(self, event_unit: EventUnit):
+        button = QtWidgets.QPushButton()
+        button.setFixedSize(QtCore.QSize(620, 50))
+        button.clicked.connect(partial(self.change_event, event_unit))  # type: ignore
+        button.setText(event_unit.description)
+        button.setFont(self.newEventButtonFont)
+        return button
+
+    def change_event(self, event_unit: EventUnit):
+        text, time, is_ok = AddEventDialog().exec_(event_unit)
+        self.logger.debug("Dialog exec (change %s): text = '%s', time = %s, is_ok = %s", event_unit, text, time, is_ok)
+        if not is_ok:
+            return
+        event_unit.description = text
+        event_unit.time = time
+        self.save_data()
+        self.update_layout()
