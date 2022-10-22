@@ -4,6 +4,7 @@ import pickle
 from PyQt6.QtCore import QDate
 
 DATA_FOLDER = pathlib.Path(__file__).resolve().parent.joinpath("data")
+DATA_FOLDER.mkdir(exist_ok=True)
 DATA_FILE = DATA_FOLDER.joinpath("data.pkl")
 
 
