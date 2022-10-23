@@ -1,10 +1,11 @@
-from data_module import EventUnit
+from data_module import CalendarEventData
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class AddEventDialog(QtWidgets.QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.setObjectName("AddEventDialog")
         self.resize(700, 400)
         self.formLayoutWidget = QtWidgets.QWidget(self)
@@ -80,11 +81,11 @@ class AddEventDialog(QtWidgets.QDialog):
         self.buttonBox.rejected.connect(self.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def exec_new(self) -> tuple[EventUnit, bool]:
+    def exec_new(self) -> tuple[CalendarEventData, bool]:
         status = self.exec()
-        return EventUnit(self.LineEdit.text(), self.DateTimeEdit.time()), bool(status)
+        return CalendarEventData(self.LineEdit.text(), self.DateTimeEdit.time()), bool(status)
 
-    def exec_change(self, event_unit: EventUnit) -> bool:
+    def exec_change(self, event_unit: CalendarEventData) -> bool:
         self.LineEdit.setText(event_unit.description)
         self.DateTimeEdit.setTime(event_unit.time)
         status = self.exec()

@@ -1,8 +1,8 @@
 import logging
 import sys
 
-from main_window import MainWindow
 from PyQt6 import QtWidgets
+from widgets.main_window import MainWindow
 
 logging.basicConfig(
     level=logging.DEBUG,
