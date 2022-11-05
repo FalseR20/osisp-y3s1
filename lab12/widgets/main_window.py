@@ -10,7 +10,7 @@ from widgets.add_event_dialog import AddEventDialog
 class MainWindow(QtWidgets.QMainWindow):
     current_selected_date: QtCore.QDate
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.logger = get_logger(self.__class__.__module__)
 
@@ -65,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.selection_changed_event()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def add_calendar_event(self):
+    def add_calendar_event(self) -> None:
         event_unit, is_ok = AddEventDialog().exec_new()
         self.logger.debug("Dialog exec: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
@@ -76,11 +76,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.save_data()
         self.update_layout()
 
-    def selection_changed_event(self):
+    def selection_changed_event(self) -> None:
         self.current_selected_date = self.calendarWidget.selectedDate()
         self.update_layout()
 
-    def update_layout(self):
+    def update_layout(self) -> None:
         self.logger.debug("Selected date: %s", self.current_selected_date)
         for i in reversed(range(self.eventsLayout.count())):  # Clear layout
             self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
@@ -88,16 +88,29 @@ class MainWindow(QtWidgets.QMainWindow):
             for event_dict in events_list:
                 self.eventsLayout.addWidget(self.create_calendar_event_widget(event_dict))
 
-    def create_calendar_event_widget(self, event_unit: CalendarEventData):
-        button = QtWidgets.QPushButton()
-        button.setFixedSize(constants.CALENDAR_EVENT_BUTTON_SIZE)
-        button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
-        button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
-        button.setStyleSheet(constants.CALENDAR_EVENT_BUTTON_STYLE)
-        button.setText(f"{event_unit.time.toString('hh:mm') :10}{event_unit.description}")
-        return button
+    def create_calendar_event_widget(self, event_unit: CalendarEventData) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        widget.setFixedSize(constants.CALENDAR_EVENT_WIDGET_SIZE)
+        change_button = QtWidgets.QPushButton(widget)
+        change_button.setFixedSize(constants.CALENDAR_EVENT_CHANGE_BUTTON_SIZE)
+        change_button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
+        change_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
+        change_button.setStyleSheet(constants.CALENDAR_EVENT_CHANGE_BUTTON_STYLE)
+        change_button.setText(f"{event_unit.time.toString('hh:mm'):10}{event_unit.description}")
+        delete_button = QtWidgets.QPushButton(widget)
+        delete_button.setGeometry(constants.CALENDAR_EVENT_DELETE_BUTTON_GEOMETRY)
+        delete_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
+        delete_button.setStyleSheet(constants.CALENDAR_EVENT_DELETE_BUTTON_STYLE)
+        delete_button.setText("del")
+        delete_button.clicked.connect(partial(self.delete_calendar_event_event, event_unit))  # type: ignore
+        return widget
 
-    def change_calendar_event_event(self, event_unit: CalendarEventData):
+    def delete_calendar_event_event(self, event_unit: CalendarEventData) -> None:
+        self.events_dict[self.current_selected_date].remove(event_unit)
+        self.save_data()
+        self.update_layout()
+
+    def change_calendar_event_event(self, event_unit: CalendarEventData) -> None:
         self.logger.debug("Dialog exec before: event_unit = %s", event_unit)
         is_ok = AddEventDialog().exec_change(event_unit)
         self.logger.debug("Dialog exec after: event_unit = %s, is_ok = %s", event_unit, is_ok)

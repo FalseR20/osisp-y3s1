@@ -6,7 +6,7 @@ from PyQt6 import QtCore
 
 _DATA_FOLDER = pathlib.Path(__file__).resolve().parent.joinpath("data")
 _DATA_FOLDER.mkdir(exist_ok=True)
-_DATA_FILE = _DATA_FOLDER.joinpath("data.pkl")
+_DATA_FILE = _DATA_FOLDER.joinpath("data-v1.pkl")
 
 
 @dataclass
