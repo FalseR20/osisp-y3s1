@@ -3,7 +3,7 @@ from functools import partial
 import constants
 from data_module import CalendarEventData, Data, load_data, save_data
 from logging_ import get_logger
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets, QtGui
 from widgets.add_event_dialog import AddEventDialog
 
 
@@ -22,6 +22,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.setCentralWidget(self.centralwidget)
+
+        # Menu
+        self.menu_bar = self.menuBar()
+        self.help_menu = self.menu_bar.addMenu("&Help")
+        self.info_action = QtGui.QAction("&Info")
+        self.help_menu.addAction(self.info_action)
+        self.info_action.triggered.connect(self.info_event)  # type: ignore
 
         # Calendar widget
         self.calendarWidget = QtWidgets.QCalendarWidget(self.centralwidget)
@@ -118,3 +125,14 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.save_data()
         self.update_layout()
+
+    @staticmethod
+    def info_event():
+        msg_box = QtWidgets.QMessageBox()
+        # msg_box.setFont(constants.)
+        msg_box.setFixedSize(QtCore.QSize(700, 880))
+        msg_box.setWindowTitle("Info")
+        msg_box.setText("Created by FalseR\n(c) All rights reserved")
+        msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+        msg_box.exec()
