@@ -42,6 +42,8 @@ class AddEventDialog(QtWidgets.QDialog):
         self.time.setObjectName("time")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.LabelRole, self.time)
         self.DateTimeEdit = QtWidgets.QTimeEdit(self.formLayoutWidget)
+        now = QtCore.QTime.currentTime()
+        self.DateTimeEdit.setTime(QtCore.QTime(now.hour(), now.minute()))
         self.DateTimeEdit.setMinimumSize(QtCore.QSize(0, 30))
         font = QtGui.QFont()
         font.setPointSize(16)

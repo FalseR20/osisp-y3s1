@@ -1,9 +1,9 @@
 from functools import partial
+from logging import getLogger
 
 import constants
 from data_module import CalendarEventData, Data, load_data, save_data
-from logging_ import get_logger
-from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6 import QtCore, QtGui, QtWidgets
 from widgets.add_event_dialog import AddEventDialog
 
 
@@ -12,7 +12,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.logger = get_logger(self.__class__.__module__)
+        self.logger = getLogger(self.__class__.__module__)
 
         # Main window
         self.setObjectName("mainWindow")
