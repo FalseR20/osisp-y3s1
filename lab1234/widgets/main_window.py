@@ -1,9 +1,9 @@
 from functools import partial
 from logging import getLogger
 
-import constants
 from data_module import CalendarEventData, Data, load_data, save_data
 from PyQt6 import QtCore, QtGui, QtWidgets
+from widgets import constants
 from widgets.add_event_dialog import AddEventDialog
 
 

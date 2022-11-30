@@ -1,8 +1,7 @@
 import json
 
+from data_module.data_classes import CalendarEventData, Data
 from PyQt6 import QtCore
-
-from .dataclasses import CalendarEventData, Data
 
 
 def data_to_json(data: Data) -> str:
