@@ -12,11 +12,3 @@ def load_data() -> bytes:
     with open(DATA_FILE, "rb") as file:
         data = file.read()
         return data
-
-
-def load_data_str() -> str:
-    if not DATA_FILE.exists():
-        return "{}"
-    with open(DATA_FILE, "rb") as file:
-        data = str(file.read())
-        return data

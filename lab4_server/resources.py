@@ -1,17 +1,23 @@
-from http import HTTPStatus
+from logging import getLogger
 
-from flask import request
+from flask import Response, request
 from flask_restful import Resource
 
 from . import load_save
 
+logger = getLogger()
+
 
 class DataResource(Resource):
     @staticmethod
-    def get():
-        return load_save.load_data_str()
+    def post():
+        data = request.data
+        logger.debug("Save data: %s", data)
+        load_save.save_data(data)
+        return Response()
 
     @staticmethod
-    def post():
-        load_save.save_data(request.data)
-        return HTTPStatus.OK
+    def get():
+        data = load_save.load_data()
+        logger.debug("Load data: %s", data)
+        return Response(data)
