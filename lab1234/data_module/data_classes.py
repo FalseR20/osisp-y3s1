@@ -6,7 +6,8 @@ from PyQt6 import QtCore
 @dataclass
 class CalendarEventData:
     description: str
-    time: QtCore.QTime
+    begin: QtCore.QTime
+    end: QtCore.QTime
 
 
 Data = dict[QtCore.QDate, list[CalendarEventData]]

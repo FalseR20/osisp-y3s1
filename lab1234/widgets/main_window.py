@@ -103,7 +103,12 @@ class MainWindow(QtWidgets.QMainWindow):
         change_button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
         change_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
         change_button.setStyleSheet(constants.CALENDAR_EVENT_CHANGE_BUTTON_STYLE)
-        change_button.setText(f"{event_unit.time.toString('hh:mm'):10}{event_unit.description}")
+        change_button.setText(f"{event_unit.begin.toString('hh:mm')} - {event_unit.end.toString('hh:mm'):10}{event_unit.description}")
+        # diff = QtCore.QTime.currentTime().secsTo(event_unit.end)
+        # if diff > 0:
+        #     timer = QtCore.QTimer(self.centralwidget)
+        #     timer.timeout.connect(self.timeout())
+        #     timer.start(diff)
         delete_button = QtWidgets.QPushButton(widget)
         delete_button.setGeometry(constants.CALENDAR_EVENT_DELETE_BUTTON_GEOMETRY)
         delete_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
@@ -136,3 +141,6 @@ class MainWindow(QtWidgets.QMainWindow):
         msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
         msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
         msg_box.exec()
+
+    # def timeout(self, *_):
+    #     print(_)
