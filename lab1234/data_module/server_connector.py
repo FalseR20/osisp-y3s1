@@ -1,8 +1,7 @@
 from logging import getLogger
 
 import requests
-
-from data_module.data_classes import Data
+from data_module.Data import Data
 from data_module.serializers import data_from_json, data_to_json
 
 logger = getLogger()
