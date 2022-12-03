@@ -1,7 +1,7 @@
 from functools import partial
 from logging import getLogger
 
-from data_module import CalendarEventBegin, Data, load_data, save_data
+from data_module import CalendarEvent, Data
 from PyQt6 import QtCore, QtGui, QtWidgets
 from widgets import constants
 from widgets.CalendarEventDialog import CalendarEventDialog
@@ -67,21 +67,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addCalendarEventButton.setText(_translate("mainWindow", "Добавить событие"))
 
         # Pre-run logic
-        self.events_dict: Data = load_data()
-        self.save_data = partial(save_data, self.events_dict)
+        self.data = Data()
         self.selection_changed_event()
         QtCore.QMetaObject.connectSlotsByName(self)
-
-    def add_calendar_event(self) -> None:
-        event_unit, is_ok = CalendarEventDialog().exec_new()
-        self.logger.debug("Dialog exec: event_unit = %s, is_ok = %s", event_unit, is_ok)
-        if not is_ok:
-            return
-        if not self.events_dict.get(self.current_selected_date):
-            self.events_dict[self.current_selected_date] = []
-        self.events_dict[self.current_selected_date].append(event_unit)
-        self.save_data()
-        self.update_layout()
 
     def selection_changed_event(self) -> None:
         self.current_selected_date = self.calendarWidget.selectedDate()
@@ -91,11 +79,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.logger.debug("Selected date: %s", self.current_selected_date)
         for i in reversed(range(self.eventsLayout.count())):  # Clear layout
             self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
-        if events_list := self.events_dict.get(self.current_selected_date):
+        if events_list := self.data[self.current_selected_date]:
             for event_dict in events_list:
                 self.eventsLayout.addWidget(self.create_calendar_event_widget(event_dict))
 
-    def create_calendar_event_widget(self, event_unit: CalendarEventBegin) -> QtWidgets.QWidget:
+    def create_calendar_event_widget(self, event_unit: CalendarEvent) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         widget.setFixedSize(constants.CALENDAR_EVENT_WIDGET_SIZE)
         change_button = QtWidgets.QPushButton(widget)
@@ -103,7 +91,16 @@ class MainWindow(QtWidgets.QMainWindow):
         change_button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
         change_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
         change_button.setStyleSheet(constants.CALENDAR_EVENT_CHANGE_BUTTON_STYLE)
-        change_button.setText(f"{event_unit.begin.toString('hh:mm')} - {event_unit.end.toString('hh:mm'):10}{event_unit.description}")
+        text: str
+        if self.current_selected_date == event_unit.begin.date():
+            text = f"{event_unit.begin.time().toString()} - "
+        else:
+            text = f"{event_unit.begin.toString()} - "
+        if self.current_selected_date == event_unit.end.date():
+            text = f"{text}{event_unit.end.time().toString()}"
+        else:
+            text = f"{text}{event_unit.end.toString()}"
+        change_button.setText(f"{text:20}{event_unit.description}")
         # diff = QtCore.QTime.currentTime().secsTo(event_unit.end)
         # if diff > 0:
         #     timer = QtCore.QTimer(self.centralwidget)
@@ -117,18 +114,25 @@ class MainWindow(QtWidgets.QMainWindow):
         delete_button.clicked.connect(partial(self.delete_calendar_event_event, event_unit))  # type: ignore
         return widget
 
-    def delete_calendar_event_event(self, event_unit: CalendarEventBegin) -> None:
-        self.events_dict[self.current_selected_date].remove(event_unit)
-        self.save_data()
+    def add_calendar_event(self) -> None:
+        calendar_event, is_ok = CalendarEventDialog(self.current_selected_date).exec_new()
+        self.logger.debug("Dialog exec: event_unit = %s, is_ok = %s", calendar_event, is_ok)
+        if not is_ok:
+            return
+        self.data.append(calendar_event)
         self.update_layout()
 
-    def change_calendar_event_event(self, event_unit: CalendarEventBegin) -> None:
+    def delete_calendar_event_event(self, event_unit: CalendarEvent) -> None:
+        self.data.remove(event_unit)
+        self.update_layout()
+
+    def change_calendar_event_event(self, event_unit: CalendarEvent) -> None:
         self.logger.debug("Dialog exec before: event_unit = %s", event_unit)
         is_ok = CalendarEventDialog().exec_change(event_unit)
         self.logger.debug("Dialog exec after: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
             return
-        self.save_data()
+        self.data.save()
         self.update_layout()
 
     @staticmethod

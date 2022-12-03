@@ -1,11 +1,11 @@
 from logging import getLogger
 
-from data_module import CalendarEventBegin, CalendarEventEnd
+from data_module import CalendarEvent
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class CalendarEventDialog(QtWidgets.QDialog):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, current_date: QtCore.QDate, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logger = getLogger(self.__class__.__module__)
         self.setWindowTitle("CalendarEventDialog")
@@ -25,8 +25,8 @@ class CalendarEventDialog(QtWidgets.QDialog):
         labels_font = QtGui.QFont("Segoe UI", 12)
         fields_font = QtGui.QFont("Segoe UI", 15)
 
-        now = QtCore.QDateTime.currentDateTime()
-        now.setTime(QtCore.QTime(now.time().hour(), now.time().minute()))
+        now_time = QtCore.QTime.currentTime()
+        default_date_time = QtCore.QDateTime(current_date, QtCore.QTime(now_time.hour(), now_time.minute()))
 
         # Description
         self.description_label = QtWidgets.QLabel(self.formLayoutWidget)
@@ -47,7 +47,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.LabelRole, self.begin_label)
 
         self.begin_field = QtWidgets.QDateTimeEdit(self.formLayoutWidget)
-        self.begin_field.setDateTime(now)
+        self.begin_field.setDateTime(default_date_time)
         self.begin_field.setMinimumSize(QtCore.QSize(0, 30))
         self.begin_field.setFont(fields_font)
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.FieldRole, self.begin_field)
@@ -59,10 +59,11 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.LabelRole, self.end_label)
 
         self.end_field = QtWidgets.QDateTimeEdit(self.formLayoutWidget)
-        self.end_field.setDateTime(now)
+        self.end_field.setDateTime(default_date_time)
         self.end_field.setMinimumSize(QtCore.QSize(0, 30))
         self.end_field.setFont(fields_font)
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.FieldRole, self.end_field)
+        self.end_field.dateTimeChanged.connect(self._end_validation_event)  # type: ignore
         self.begin_field.dateTimeChanged.connect(self.end_field.setDateTime)  # type: ignore
 
         # Retranslate
@@ -84,22 +85,20 @@ class CalendarEventDialog(QtWidgets.QDialog):
         QtCore.QMetaObject.connectSlotsByName(self)
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.buttonBox)
 
-    def exec_new(self) -> tuple[CalendarEventBegin, bool]:
+    def _end_validation_event(self, end_date_time: QtCore.QDateTime):
+        apply_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+        apply_button.setDisabled(end_date_time < self.begin_field.dateTime())
+
+    def exec_new(self) -> tuple[CalendarEvent, bool]:
         status = self.exec()
-        calendar_event_begin = CalendarEventBegin(
+        calendar_event = CalendarEvent(
             self.description_field.text(),
             self.begin_field.dateTime(),
-            None,
+            self.end_field.dateTime(),
         )
-        if self.begin_field != self.end_field:
-            calendar_event_begin.end = CalendarEventEnd(
-                self.end_field.dateTime(),
-                calendar_event_begin,
-            )
+        return calendar_event, bool(status)
 
-        return calendar_event_begin, bool(status)
-
-    def exec_change(self, event_unit: CalendarEventBegin) -> bool:
+    def exec_change(self, event_unit: CalendarEvent) -> bool:
         self.description_field.setText(event_unit.description)
         self.begin_field.setDateTime(event_unit.begin)
         self.end_field.setDateTime(event_unit.end)
