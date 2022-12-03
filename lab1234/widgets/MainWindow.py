@@ -80,8 +80,8 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in reversed(range(self.eventsLayout.count())):  # Clear layout
             self.eventsLayout.removeWidget(self.eventsLayout.itemAt(i).widget())
         if events_list := self.data[self.current_selected_date]:
-            for event_dict in events_list:
-                self.eventsLayout.addWidget(self.create_calendar_event_widget(event_dict))
+            for event in events_list:
+                self.eventsLayout.addWidget(self.create_calendar_event_widget(event))
 
     def create_calendar_event_widget(self, event_unit: CalendarEvent) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
@@ -91,21 +91,27 @@ class MainWindow(QtWidgets.QMainWindow):
         change_button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
         change_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
         change_button.setStyleSheet(constants.CALENDAR_EVENT_CHANGE_BUTTON_STYLE)
-        text: str
-        if self.current_selected_date == event_unit.begin.date():
-            text = f"{event_unit.begin.time().toString()} - "
-        else:
-            text = f"{event_unit.begin.toString()} - "
-        if self.current_selected_date == event_unit.end.date():
-            text = f"{text}{event_unit.end.time().toString()}"
-        else:
-            text = f"{text}{event_unit.end.toString()}"
-        change_button.setText(f"{text:20}{event_unit.description}")
-        # diff = QtCore.QTime.currentTime().secsTo(event_unit.end)
+
+        time_format = "hh:mm"
+        datetime_format = f"dd.MM.yyyy {time_format}"
+        text = f"""{
+        event_unit.begin.time().toString(time_format) 
+        if self.current_selected_date == event_unit.begin.date() 
+        else event_unit.begin.toString(datetime_format)
+        } - {
+        event_unit.end.time().toString(time_format)
+        if self.current_selected_date == event_unit.end.date()
+        else event_unit.end.toString(datetime_format)
+        }"""
+        change_button.setText(f"{text} | {event_unit.description}")
+        ##
+        # diff = QtCore.QDateTime.currentDateTime().secsTo(event_unit.end)
         # if diff > 0:
-        #     timer = QtCore.QTimer(self.centralwidget)
-        #     timer.timeout.connect(self.timeout())
-        #     timer.start(diff)
+        #     timer = QtCore.QTimer(widget)
+        #     timer.t
+        #     timer.timeout.connect(self.timeout)  # type: ignore
+        #     timer.start(1000)
+        ##
         delete_button = QtWidgets.QPushButton(widget)
         delete_button.setGeometry(constants.CALENDAR_EVENT_DELETE_BUTTON_GEOMETRY)
         delete_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
