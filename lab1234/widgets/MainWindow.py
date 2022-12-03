@@ -1,10 +1,10 @@
 from functools import partial
 from logging import getLogger
 
-from data_module import CalendarEventData, Data, load_data, save_data
+from data_module import CalendarEventBegin, Data, load_data, save_data
 from PyQt6 import QtCore, QtGui, QtWidgets
 from widgets import constants
-from widgets.add_event_dialog import AddEventDialog
+from widgets.CalendarEventDialog import CalendarEventDialog
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -73,7 +73,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def add_calendar_event(self) -> None:
-        event_unit, is_ok = AddEventDialog().exec_new()
+        event_unit, is_ok = CalendarEventDialog().exec_new()
         self.logger.debug("Dialog exec: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
             return
@@ -95,7 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
             for event_dict in events_list:
                 self.eventsLayout.addWidget(self.create_calendar_event_widget(event_dict))
 
-    def create_calendar_event_widget(self, event_unit: CalendarEventData) -> QtWidgets.QWidget:
+    def create_calendar_event_widget(self, event_unit: CalendarEventBegin) -> QtWidgets.QWidget:
         widget = QtWidgets.QWidget()
         widget.setFixedSize(constants.CALENDAR_EVENT_WIDGET_SIZE)
         change_button = QtWidgets.QPushButton(widget)
@@ -117,14 +117,14 @@ class MainWindow(QtWidgets.QMainWindow):
         delete_button.clicked.connect(partial(self.delete_calendar_event_event, event_unit))  # type: ignore
         return widget
 
-    def delete_calendar_event_event(self, event_unit: CalendarEventData) -> None:
+    def delete_calendar_event_event(self, event_unit: CalendarEventBegin) -> None:
         self.events_dict[self.current_selected_date].remove(event_unit)
         self.save_data()
         self.update_layout()
 
-    def change_calendar_event_event(self, event_unit: CalendarEventData) -> None:
+    def change_calendar_event_event(self, event_unit: CalendarEventBegin) -> None:
         self.logger.debug("Dialog exec before: event_unit = %s", event_unit)
-        is_ok = AddEventDialog().exec_change(event_unit)
+        is_ok = CalendarEventDialog().exec_change(event_unit)
         self.logger.debug("Dialog exec after: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
             return

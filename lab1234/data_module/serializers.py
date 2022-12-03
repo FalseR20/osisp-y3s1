@@ -1,6 +1,6 @@
 import json
 
-from data_module.data_classes import CalendarEventData, Data
+from data_module.data_classes import CalendarEventBegin, Data
 from PyQt6 import QtCore
 
 
@@ -24,7 +24,7 @@ def data_from_json(data_json: str) -> Data:
     data_dict = json.loads(data_json)
     data = {
         QtCore.QDate.fromString(date_str): [
-            CalendarEventData(
+            CalendarEventBegin(
                 calendar_event["description"],
                 QtCore.QTime.fromString(calendar_event["begin"]),
                 QtCore.QTime.fromString(calendar_event["end"]),

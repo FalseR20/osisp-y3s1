@@ -1,13 +1,22 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import Optional, Union
 
 from PyQt6 import QtCore
 
 
 @dataclass
-class CalendarEventData:
+class CalendarEventBegin:
     description: str
-    begin: QtCore.QTime
-    end: QtCore.QTime
+    begin: QtCore.QDateTime
+    end: Optional[CalendarEventEnd]
 
 
-Data = dict[QtCore.QDate, list[CalendarEventData]]
+@dataclass
+class CalendarEventEnd:
+    end: QtCore.QDateTime
+    begin: CalendarEventBegin
+
+
+Data = dict[QtCore.QDate, list[Union[CalendarEventBegin, CalendarEventEnd]]]
