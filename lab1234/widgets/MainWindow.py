@@ -91,6 +91,8 @@ class MainWindow(QtWidgets.QMainWindow):
         change_button.clicked.connect(partial(self.change_calendar_event_event, event_unit))  # type: ignore
         change_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
         change_button.setStyleSheet(constants.CALENDAR_EVENT_CHANGE_BUTTON_STYLE)
+        change_button.setAutoFillBackground(True)
+        change_button.setPalette(QtGui.QPalette(event_unit.color))
 
         time_format = "hh:mm"
         datetime_format = f"dd.MM.yyyy {time_format}"
@@ -134,7 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_calendar_event_event(self, event_unit: CalendarEvent) -> None:
         self.logger.debug("Dialog exec before: event_unit = %s", event_unit)
-        is_ok = CalendarEventDialog().exec_change(event_unit)
+        is_ok = CalendarEventDialog(self.current_selected_date).exec_change(event_unit)
         self.logger.debug("Dialog exec after: event_unit = %s, is_ok = %s", event_unit, is_ok)
         if not is_ok:
             return

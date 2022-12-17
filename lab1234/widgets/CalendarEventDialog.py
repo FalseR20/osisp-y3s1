@@ -66,6 +66,13 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.end_field.dateTimeChanged.connect(self._end_validation_event)  # type: ignore
         self.begin_field.dateTimeChanged.connect(self.end_field.setDateTime)  # type: ignore
 
+        self.color_button = QtWidgets.QPushButton(self.formLayoutWidget)
+        self.color_button.setText("Color")
+        self.color_button.setFont(fields_font)
+        self.color_button.setAutoFillBackground(True)
+        self.color_button.clicked.connect(self._change_color_event)
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.FieldRole, self.color_button)
+
         # Retranslate
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Dialog", "Dialog"))
@@ -83,11 +90,15 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)  # type: ignore
         self.buttonBox.rejected.connect(self.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(self)
-        self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.buttonBox)
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.buttonBox)
 
     def _end_validation_event(self, end_date_time: QtCore.QDateTime):
         apply_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
         apply_button.setDisabled(end_date_time < self.begin_field.dateTime())
+
+    def _change_color_event(self, *_):
+        color = QtWidgets.QColorDialog.getColor()
+        self.color_button.setPalette(QtGui.QPalette(color))
 
     def exec_new(self) -> tuple[CalendarEvent, bool]:
         status = self.exec()
@@ -95,6 +106,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
             self.description_field.text(),
             self.begin_field.dateTime(),
             self.end_field.dateTime(),
+            self.color_button.palette().color(QtGui.QPalette.ColorRole.Button)
         )
         return calendar_event, bool(status)
 
@@ -102,9 +114,11 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.description_field.setText(event_unit.description)
         self.begin_field.setDateTime(event_unit.begin)
         self.end_field.setDateTime(event_unit.end)
+        self.color_button.setPalette(QtGui.QPalette(event_unit.color))
         status = self.exec()
         if is_ok := bool(status):
             event_unit.description = self.description_field.text()
             event_unit.begin = self.begin_field.dateTime()
             event_unit.end = self.end_field.dateTime()
+            event_unit.color = self.color_button.palette().color(QtGui.QPalette.ColorRole.Button)
         return is_ok
