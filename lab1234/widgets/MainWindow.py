@@ -110,14 +110,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else ''
         } | {event_unit.description}"""
         change_button.setText(text)
-        ##
-        # diff = QtCore.QDateTime.currentDateTime().secsTo(event_unit.end)
-        # if diff > 0:
-        #     timer = QtCore.QTimer(widget)
-        #     timer.t
-        #     timer.timeout.connect(self.timeout)  # type: ignore
-        #     timer.start(1000)
-        ##
         delete_button = QtWidgets.QPushButton(widget)
         delete_button.setGeometry(constants.CALENDAR_EVENT_DELETE_BUTTON_GEOMETRY)
         delete_button.setFont(constants.CALENDAR_EVENT_BUTTON_FONT)
@@ -150,13 +142,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @staticmethod
     def info_event():
         msg_box = QtWidgets.QMessageBox()
-        # msg_box.setFont(constants.)
         msg_box.setFixedSize(QtCore.QSize(700, 880))
         msg_box.setWindowTitle("Info")
         msg_box.setText("Created by FalseR\n(c) All rights reserved")
         msg_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
         msg_box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
         msg_box.exec()
-
-    # def timeout(self, *_):
-    #     print(_)

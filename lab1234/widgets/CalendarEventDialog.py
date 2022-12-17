@@ -71,7 +71,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.color_button.setText("Color")
         self.color_button.setFont(fields_font)
         self.color_button.setAutoFillBackground(True)
-        self.color_button.clicked.connect(self._change_color_event)
+        self.color_button.clicked.connect(self._change_color_event)  # type: ignore
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.FieldRole, self.color_button)
 
         # Repeat
@@ -84,7 +84,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.repeat_field.setMinimum(0)
         self.repeat_field.setValue(0)
         self.repeat_field.setFont(fields_font)
-        self.repeat_field.valueChanged.connect(self._validation_event)
+        self.repeat_field.valueChanged.connect(self._validation_event)  # type: ignore
         self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.FieldRole, self.repeat_field)
 
         # Retranslate
@@ -96,7 +96,6 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.repeat_label.setText(_translate("Dialog", "Повторять каждые n дней (0 - не повторять)"))
 
         self.buttonBox = QtWidgets.QDialogButtonBox(self.formLayoutWidget)
-        # self.buttonBox.setGeometry(QtCore.QRect(0, 330, 600, 50))
         self.buttonBox.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.buttonBox.setStandardButtons(
             QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Ok
@@ -125,7 +124,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
             self.begin_field.dateTime(),
             self.end_field.dateTime(),
             self.color_button.palette().color(QtGui.QPalette.ColorRole.Button),
-            self.repeat_field.value()
+            self.repeat_field.value(),
         )
         return calendar_event, bool(status)
 
