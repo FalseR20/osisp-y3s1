@@ -100,12 +100,16 @@ class MainWindow(QtWidgets.QMainWindow):
         event_unit.begin.time().toString(time_format) 
         if self.current_selected_date == event_unit.begin.date() 
         else event_unit.begin.toString(datetime_format)
-        } - {
+        }{
+        f''' - {
         event_unit.end.time().toString(time_format)
-        if self.current_selected_date == event_unit.end.date()
+        if event_unit.begin.date() == event_unit.end.date()
         else event_unit.end.toString(datetime_format)
-        }"""
-        change_button.setText(f"{text} | {event_unit.description}")
+        }''' 
+        if event_unit.begin.time() != event_unit.end.time() 
+        else ''
+        } | {event_unit.description}"""
+        change_button.setText(text)
         ##
         # diff = QtCore.QDateTime.currentDateTime().secsTo(event_unit.end)
         # if diff > 0:
