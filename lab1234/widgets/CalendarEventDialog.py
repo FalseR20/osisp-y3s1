@@ -9,7 +9,7 @@ class CalendarEventDialog(QtWidgets.QDialog):
         super().__init__(*args, **kwargs)
         self.logger = getLogger(self.__class__.__module__)
         self.setWindowTitle("CalendarEventDialog")
-        self.resize(700, 330)
+        self.resize(700, 420)
 
         self.formLayoutWidget = QtWidgets.QWidget(self)
         self.formLayoutWidget.setGeometry(QtCore.QRect(20, 20, 660, 300))
@@ -63,9 +63,10 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.end_field.setMinimumSize(QtCore.QSize(0, 30))
         self.end_field.setFont(fields_font)
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.ItemRole.FieldRole, self.end_field)
-        self.end_field.dateTimeChanged.connect(self._end_validation_event)  # type: ignore
+        self.end_field.dateTimeChanged.connect(self._validation_event)  # type: ignore
         self.begin_field.dateTimeChanged.connect(self.end_field.setDateTime)  # type: ignore
 
+        # Color
         self.color_button = QtWidgets.QPushButton(self.formLayoutWidget)
         self.color_button.setText("Color")
         self.color_button.setFont(fields_font)
@@ -73,12 +74,26 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.color_button.clicked.connect(self._change_color_event)
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.ItemRole.FieldRole, self.color_button)
 
+        # Repeat
+        self.repeat_label = QtWidgets.QLabel(self.formLayoutWidget)
+        self.repeat_label.setMinimumSize(QtCore.QSize(0, 30))
+        self.repeat_label.setFont(labels_font)
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.LabelRole, self.repeat_label)
+
+        self.repeat_field = QtWidgets.QSpinBox()
+        self.repeat_field.setMinimum(0)
+        self.repeat_field.setValue(0)
+        self.repeat_field.setFont(fields_font)
+        self.repeat_field.valueChanged.connect(self._validation_event)
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.FieldRole, self.repeat_field)
+
         # Retranslate
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Dialog", "Dialog"))
         self.description_label.setText(_translate("Dialog", "Название события"))
         self.begin_label.setText(_translate("Dialog", "Начало"))
         self.end_label.setText(_translate("Dialog", "Конец"))
+        self.repeat_label.setText(_translate("Dialog", "Повторять каждые n дней (0 - не повторять)"))
 
         self.buttonBox = QtWidgets.QDialogButtonBox(self.formLayoutWidget)
         # self.buttonBox.setGeometry(QtCore.QRect(0, 330, 600, 50))
@@ -90,11 +105,14 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)  # type: ignore
         self.buttonBox.rejected.connect(self.reject)  # type: ignore
         QtCore.QMetaObject.connectSlotsByName(self)
-        self.formLayout.setWidget(4, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.buttonBox)
+        self.formLayout.setWidget(5, QtWidgets.QFormLayout.ItemRole.SpanningRole, self.buttonBox)
 
-    def _end_validation_event(self, end_date_time: QtCore.QDateTime):
+    def _validation_event(self, *_):
         apply_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
-        apply_button.setDisabled(end_date_time < self.begin_field.dateTime())
+        apply_button.setDisabled(
+            self.end_field.dateTime() < self.begin_field.dateTime()
+            or 0 < self.repeat_field.value() <= self.begin_field.date().daysTo(self.end_field.date())
+        )
 
     def _change_color_event(self, *_):
         color = QtWidgets.QColorDialog.getColor()
@@ -106,7 +124,8 @@ class CalendarEventDialog(QtWidgets.QDialog):
             self.description_field.text(),
             self.begin_field.dateTime(),
             self.end_field.dateTime(),
-            self.color_button.palette().color(QtGui.QPalette.ColorRole.Button)
+            self.color_button.palette().color(QtGui.QPalette.ColorRole.Button),
+            self.repeat_field.value()
         )
         return calendar_event, bool(status)
 
@@ -115,10 +134,12 @@ class CalendarEventDialog(QtWidgets.QDialog):
         self.begin_field.setDateTime(event_unit.begin)
         self.end_field.setDateTime(event_unit.end)
         self.color_button.setPalette(QtGui.QPalette(event_unit.color))
+        self.repeat_field.setValue(event_unit.repeat)
         status = self.exec()
         if is_ok := bool(status):
             event_unit.description = self.description_field.text()
             event_unit.begin = self.begin_field.dateTime()
             event_unit.end = self.end_field.dateTime()
             event_unit.color = self.color_button.palette().color(QtGui.QPalette.ColorRole.Button)
+            event_unit.repeat = self.repeat_field.value()
         return is_ok

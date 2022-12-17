@@ -12,6 +12,7 @@ class CalendarEvent:
     begin: QDateTime
     end: QDateTime
     color: QColor
+    repeat: int
 
     def __lt__(self, other: CalendarEvent):
         return self.begin < other.begin

@@ -16,7 +16,7 @@ class Data:
         self.events = load_data()
 
     def __getitem__(self, date: QDate) -> List[CalendarEvent]:
-        events = [event for event in self.events if event.begin.date() <= date <= event.end.date()]
+        events = [event for event in self.events if _confirm_by_date(date, event)]
         events = sorted(events, key=_key_begin)
         return events
 
@@ -30,6 +30,13 @@ class Data:
     def remove(self, calendar_event: CalendarEvent) -> None:
         self.events.remove(calendar_event)
         self.save()
+
+
+def _confirm_by_date(date: QDate, event: CalendarEvent) -> bool:
+    date_copy = (
+        date if event.repeat == 0 else date.addDays((date.daysTo(event.end.date()) // event.repeat) * event.repeat)
+    )
+    return event.begin.date() <= date_copy <= event.end.date()
 
 
 def _key_begin(calendar_event: CalendarEvent) -> QDateTime:
